@@ -29,9 +29,6 @@ app.prepare().then(() => {
     }
   });
 
-  // プロキシ信頼設定
-  server.set('trust proxy', 1);
-
   const io = new Server(server, {
     path: '/api/socket',
     addTrailingSlash: false,
