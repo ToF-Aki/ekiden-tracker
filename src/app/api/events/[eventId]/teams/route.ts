@@ -4,11 +4,12 @@ import { prisma } from '@/lib/prisma';
 // チーム一覧取得
 export async function GET(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
+    const { eventId } = await params;
     const teams = await prisma.team.findMany({
-      where: { eventId: params.eventId },
+      where: { eventId: eventId },
       orderBy: { teamNumber: 'asc' },
     });
 
@@ -22,13 +23,14 @@ export async function GET(
 // チーム作成
 export async function POST(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
+    const { eventId } = await params;
     const body = await req.json();
     const team = await prisma.team.create({
       data: {
-        eventId: params.eventId,
+        eventId: eventId,
         ...body,
       },
     });

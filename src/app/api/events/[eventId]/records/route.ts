@@ -4,13 +4,14 @@ import { prisma } from '@/lib/prisma';
 // 記録一覧取得
 export async function GET(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
+    const { eventId } = await params;
     const records = await prisma.record.findMany({
       where: {
         team: {
-          eventId: params.eventId,
+          eventId: eventId,
         },
       },
       include: {
@@ -30,16 +31,17 @@ export async function GET(
 // 記録作成（通過記録）
 export async function POST(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
+    const { eventId } = await params;
     const body = await req.json();
     const { teamNumber, checkpointDistance } = body;
 
     // チームを取得
     const team = await prisma.team.findFirst({
       where: {
-        eventId: params.eventId,
+        eventId: eventId,
         teamNumber: parseInt(teamNumber),
       },
     });
@@ -51,7 +53,7 @@ export async function POST(
     // チェックポイントを取得
     const checkpoint = await prisma.checkpoint.findFirst({
       where: {
-        eventId: params.eventId,
+        eventId: eventId,
         distance: parseInt(checkpointDistance),
       },
     });

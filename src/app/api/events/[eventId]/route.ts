@@ -4,11 +4,12 @@ import { prisma } from '@/lib/prisma';
 // イベント詳細取得
 export async function GET(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
+    const { eventId } = await params;
     const event = await prisma.event.findUnique({
-      where: { id: params.eventId },
+      where: { id: eventId },
       include: {
         teams: {
           orderBy: { teamNumber: 'asc' },
@@ -33,12 +34,13 @@ export async function GET(
 // イベント更新
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
+    const { eventId } = await params;
     const body = await req.json();
     const event = await prisma.event.update({
-      where: { id: params.eventId },
+      where: { id: eventId },
       data: body,
     });
 
@@ -52,11 +54,12 @@ export async function PATCH(
 // イベント削除
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
+    const { eventId } = await params;
     await prisma.event.delete({
-      where: { id: params.eventId },
+      where: { id: eventId },
     });
 
     return NextResponse.json({ success: true });
