@@ -13,6 +13,13 @@ const handle = app.getRequestHandler();
 app.prepare().then(() => {
   const server = createServer(async (req, res) => {
     try {
+      // ヘルスチェックエンドポイント
+      if (req.url === '/healthz') {
+        res.statusCode = 200;
+        res.end('ok');
+        return;
+      }
+
       const parsedUrl = parse(req.url, true);
       await handle(req, res, parsedUrl);
     } catch (err) {
@@ -21,6 +28,9 @@ app.prepare().then(() => {
       res.end('internal server error');
     }
   });
+
+  // プロキシ信頼設定
+  server.set('trust proxy', 1);
 
   const io = new Server(server, {
     path: '/api/socket',
