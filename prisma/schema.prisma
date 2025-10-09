@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  events    Event[]
+}
+
+model Event {
+  id          String       @id @default(cuid())
+  name        String
+  date        DateTime
+  status      String       @default("準備中") // 準備中, 進行中, 終了
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  teams       Team[]
+  checkpoints Checkpoint[]
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  teamNumber  Int
+  teamName    String
+  member1     String
+  member2     String
+  member3     String
+  member4     String
+  member5     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  records     Record[]
+
+  @@unique([eventId, teamNumber])
+}
+
+model Checkpoint {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  distance  Int      // 1, 2, 3, 4 (km)
+  name      String   // "1km地点", "2km地点", etc.
+  createdAt DateTime @default(now())
+  records   Record[]
+
+  @@unique([eventId, distance])
+}
+
+model Record {
+  id           String     @id @default(cuid())
+  teamId       String
+  team         Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  checkpointId String
+  checkpoint   Checkpoint @relation(fields: [checkpointId], references: [id], onDelete: Cascade)
+  runnerNumber Int        // 1-5走目
+  timestamp    DateTime   @default(now())
+  createdAt    DateTime   @default(now())
+
+  @@unique([teamId, checkpointId, runnerNumber])
+  @@index([teamId])
+  @@index([checkpointId])
+}
