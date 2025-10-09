@@ -2,6 +2,7 @@ const { createServer } = require('http');
 const { parse } = require('url');
 const next = require('next');
 const { Server } = require('socket.io');
+const express = require('express');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = process.env.HOSTNAME || '0.0.0.0';
@@ -11,15 +12,19 @@ const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
-  const server = createServer(async (req, res) => {
-    try {
-      // ヘルスチェックエンドポイント
-      if (req.url === '/healthz') {
-        res.statusCode = 200;
-        res.end('ok');
-        return;
-      }
+  const expressApp = express();
+  
+  // プロキシ信頼設定
+  expressApp.set('trust proxy', 1);
 
+  // ヘルスチェックエンドポイント
+  expressApp.get('/healthz', (req, res) => {
+    res.status(200).send('ok');
+  });
+
+  // Next.jsのハンドラーをミドルウェアとして使用
+  expressApp.use(async (req, res) => {
+    try {
       const parsedUrl = parse(req.url, true);
       await handle(req, res, parsedUrl);
     } catch (err) {
@@ -28,6 +33,8 @@ app.prepare().then(() => {
       res.end('internal server error');
     }
   });
+
+  const server = createServer(expressApp);
 
   const io = new Server(server, {
     path: '/api/socket',
