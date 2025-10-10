@@ -22,7 +22,8 @@ export const authOptions: NextAuthOptions = {
   ],
 
   // ← ここが重要: 明示的にsecretを渡す（v4はNEXTAUTH_*が正）
-  secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
+  // 緊急対応：環境変数が読み込めない場合のフォールバック
+  secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET ?? 'Zi1rJjyrFz8eXthbtzJa696Cky3yplVvfzn3W0RjgCM=',
 
   pages: {
     signIn: '/admin/login',

@@ -9,6 +9,9 @@ export async function GET() {
       NEXTAUTH_URL: process.env.NEXTAUTH_URL,
       AUTH_URL: process.env.AUTH_URL,
       NODE_ENV: process.env.NODE_ENV,
+      // 緊急対応：フォールバック値の確認
+      FALLBACK_SECRET: 'Zi1rJjyrFz8eXthbtzJa696Cky3yplVvfzn3W0RjgCM=',
+      HAS_FALLBACK: true,
     }),
     { headers: { "content-type": "application/json" } }
   );
