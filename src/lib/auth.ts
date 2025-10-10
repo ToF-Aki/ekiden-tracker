@@ -1,19 +1,9 @@
-import { NextAuthOptions } from 'next-auth';
+import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { prisma } from './prisma';
 
-// デバッグ用：環境変数の確認
-console.log('NextAuth Environment Variables:');
-console.log('NEXTAUTH_SECRET:', process.env.NEXTAUTH_SECRET ? 'SET' : 'NOT SET');
-console.log('AUTH_SECRET:', process.env.AUTH_SECRET ? 'SET' : 'NOT SET');
-console.log('NEXTAUTH_URL:', process.env.NEXTAUTH_URL);
-console.log('AUTH_URL:', process.env.AUTH_URL);
-
 export const authOptions: NextAuthOptions = {
-  debug: process.env.NODE_ENV === 'development',
-  // ← ここが重要：Secretを明示的に渡す
-  secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -51,6 +41,10 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
+
+  // ← ここが重要: 明示的にsecretを渡す（v4はNEXTAUTH_*が正）
+  secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
+
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -70,7 +64,9 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/admin/login',
   },
-  session: {
-    strategy: 'jwt',
-  },
+  session: { strategy: 'jwt' },
+
+  // v4では未定義でも害なし（v5相当）
+  // @ts-expect-error
+  trustHost: true,
 };
