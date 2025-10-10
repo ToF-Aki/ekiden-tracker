@@ -5,6 +5,8 @@ import { prisma } from './prisma';
 
 export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development',
+  // 強制的にsecretを設定
+  secret: 'Zi1rJjyrFz8eXthbtzJa696Cky3yplVvfzn3W0RjgCM=',
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -64,5 +66,5 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
   },
-  secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || 'Zi1rJjyrFz8eXthbtzJa696Cky3yplVvfzn3W0RjgCM=',
 };
