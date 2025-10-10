@@ -41,8 +41,6 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-  // 本番プロキシ配下でのHTTPS判定を安定させる
-  trustHost: true,
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
