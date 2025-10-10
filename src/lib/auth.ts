@@ -1,10 +1,8 @@
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
-const BASE_URL =
-  process.env.NEXTAUTH_URL ||
-  process.env.AUTH_URL ||
-  "https://www.ekiden-tracker.com";
+// 本番ドメインを固定（ENVが直るまでの暫定）
+const BASE_URL = "https://www.ekiden-tracker.com";
 
 const FALLBACK_SECRET = "TEMP-ONLY-change-me-0123456789"; // 後で必ず削除
 
@@ -18,8 +16,6 @@ export const authOptions: NextAuthOptions = {
         password: { label: "パスワード", type: "password" },
       },
       async authorize(cred) {
-        // ★ デバッグログ（暫定）
-        console.log("authorize()", cred);
         if (cred?.username === "admin" && cred?.password === "admin123") {
           return { id: "1", name: "Admin", email: "admin@example.com" };
         }
@@ -37,6 +33,19 @@ export const authOptions: NextAuthOptions = {
     signIn: '/admin/login',
   },
   session: { strategy: 'jwt' },
+
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) token.id = (user as any).id ?? "1"; // Credentialsの固定ユーザなら "1"
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user && token?.id) {
+        (session.user as any).id = token.id;
+      }
+      return session;
+    },
+  },
 
   // v4では未定義でも害なし（v5相当）
   // @ts-expect-error
