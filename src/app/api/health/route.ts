@@ -1,0 +1,8 @@
+// ヘルスチェック用API
+export const runtime = "nodejs";
+
+import { NextResponse } from 'next/server';
+
+export async function GET() {
+  return NextResponse.json({ status: 'ok' }, { status: 200 });
+}
