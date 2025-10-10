@@ -20,13 +20,17 @@ export default function LoginPage() {
         username,
         password,
         redirect: false,
+        callbackUrl: '/admin/dashboard',
       });
 
-      if (result?.error) {
-        toast.error('ログインに失敗しました');
+      if (!result) {
+        toast.error('unknown error');
+      } else if (result.error) {
+        toast.error(result.error || 'ログインに失敗しました');
       } else {
         toast.success('ログインしました');
-        router.push('/admin/dashboard');
+        // result.url を優先（NextAuthが返すURL）
+        window.location.href = result.url || '/admin/dashboard';
       }
     } catch (error) {
       toast.error('エラーが発生しました');
