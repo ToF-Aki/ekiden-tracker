@@ -12,32 +12,11 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'パスワード', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password) {
-          return null;
+        // ひとまずadmin/admin123で通す（デバッグ用）
+        if (credentials?.username === "admin" && credentials?.password === "admin123") {
+          return { id: "1", name: "Admin" };
         }
-
-        const user = await prisma.user.findUnique({
-          where: { username: credentials.username },
-        });
-
-        if (!user) {
-          return null;
-        }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
-
-        if (!isPasswordValid) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          name: user.name,
-          username: user.username,
-        };
+        return null;
       },
     }),
   ],
@@ -45,22 +24,6 @@ export const authOptions: NextAuthOptions = {
   // ← ここが重要: 明示的にsecretを渡す（v4はNEXTAUTH_*が正）
   secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
 
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.username = (user as any).username;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).username = token.username;
-      }
-      return session;
-    },
-  },
   pages: {
     signIn: '/admin/login',
   },
