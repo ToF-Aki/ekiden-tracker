@@ -12,8 +12,8 @@ console.log('AUTH_URL:', process.env.AUTH_URL);
 
 export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development',
-  // 複数の方法でsecretを設定
-  secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || 'Zi1rJjyrFz8eXthbtzJa696Cky3yplVvfzn3W0RjgCM=',
+  // ← ここが重要：Secretを明示的に渡す
+  secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: 'Credentials',
