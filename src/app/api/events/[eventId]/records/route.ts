@@ -62,6 +62,12 @@ export async function POST(
       return NextResponse.json({ error: 'チェックポイントが見つかりません' }, { status: 404 });
     }
 
+    // 全チェックポイントを取得
+    const allCheckpoints = await prisma.checkpoint.findMany({
+      where: { eventId: eventId },
+      orderBy: { distance: 'asc' },
+    });
+
     // 走者番号を計算するために、このチームの既存記録を取得
     // 1走目: 1km, 2km, 3km, 4km
     // 2走目: 1km, 2km, 3km, 4km
@@ -124,11 +130,6 @@ export async function POST(
 
     // 前のチェックポイントの記録を自動補完
     // 例: 2km地点で入力した場合、1km地点の記録がなければ自動的に追加
-    const allCheckpoints = await prisma.checkpoint.findMany({
-      where: { eventId: eventId },
-      orderBy: { distance: 'asc' },
-    });
-
     const currentCheckpointIndex = allCheckpoints.findIndex(cp => cp.id === checkpoint.id);
     const createdRecords = [];
 
