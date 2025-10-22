@@ -25,7 +25,8 @@ export default function CheckpointPage() {
   const eventId = params.eventId as string;
   const [event, setEvent] = useState<Event | null>(null);
   const [selectedCheckpoint, setSelectedCheckpoint] = useState<number | null>(null);
-  const [teamNumber, setTeamNumber] = useState('');
+  const [selectedTeamNumbers, setSelectedTeamNumbers] = useState<number[]>([]);
+  const [manualInput, setManualInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const { socket, isConnected } = useSocket(eventId);
@@ -55,42 +56,85 @@ export default function CheckpointPage() {
     }
   };
 
+  // チーム番号を追加
+  const addTeamNumber = (num: number) => {
+    if (!selectedTeamNumbers.includes(num)) {
+      setSelectedTeamNumbers([...selectedTeamNumbers, num]);
+    }
+  };
+
+  // チーム番号を削除
+  const removeTeamNumber = (num: number) => {
+    setSelectedTeamNumbers(selectedTeamNumbers.filter(n => n !== num));
+  };
+
+  // 手動入力から追加
+  const handleManualAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    const num = parseInt(manualInput);
+    if (!isNaN(num) && num > 0) {
+      addTeamNumber(num);
+      setManualInput('');
+    }
+  };
+
+  // 一括記録
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (selectedTeamNumbers.length === 0) {
+      toast.error('ゼッケン番号を選択してください');
+      return;
+    }
+
     setSubmitting(true);
+    let successCount = 0;
+    let failCount = 0;
+    const errors: string[] = [];
 
     try {
-      const res = await fetch(`/api/events/${eventId}/records`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          teamNumber,
-          checkpointDistance: selectedCheckpoint,
-        }),
-      });
+      // 各チーム番号を順番に記録
+      for (const teamNumber of selectedTeamNumbers) {
+        try {
+          const res = await fetch(`/api/events/${eventId}/records`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              teamNumber: teamNumber.toString(),
+              checkpointDistance: selectedCheckpoint,
+            }),
+          });
 
-      if (res.ok) {
-        const data = await res.json();
+          if (res.ok) {
+            const data = await res.json();
+            successCount++;
 
-        // 自動補完された記録がある場合はメッセージを表示
-        if (data.autoCompleted > 0) {
-          toast.success(
-            `ゼッケン${teamNumber}番を記録しました\n前の地点${data.autoCompleted}箇所も自動補完しました`,
-            { duration: 4000 }
-          );
-        } else {
-          toast.success(`ゼッケン${teamNumber}番を記録しました`);
+            // WebSocketで通知
+            if (socket) {
+              socket.emit('record-created', { eventId, record: data });
+            }
+          } else {
+            const error = await res.json();
+            failCount++;
+            errors.push(`ゼッケン${teamNumber}: ${error.error}`);
+          }
+        } catch (error) {
+          failCount++;
+          errors.push(`ゼッケン${teamNumber}: エラーが発生しました`);
         }
+      }
 
-        setTeamNumber('');
+      // 結果を表示
+      if (successCount > 0) {
+        toast.success(`${successCount}チームを記録しました`, { duration: 3000 });
+      }
+      if (failCount > 0) {
+        errors.forEach(err => toast.error(err, { duration: 5000 }));
+      }
 
-        // WebSocketで通知
-        if (socket) {
-          socket.emit('record-created', { eventId, record: data });
-        }
-      } else {
-        const error = await res.json();
-        toast.error(error.error || '記録の登録に失敗しました');
+      // 成功したチームをリストから削除
+      if (successCount > 0) {
+        setSelectedTeamNumbers([]);
       }
     } catch (error) {
       toast.error('エラーが発生しました');
@@ -187,50 +231,107 @@ export default function CheckpointPage() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-lg font-semibold text-gray-700 mb-4">
-                ゼッケン番号入力
+          {/* 選択されたゼッケン番号表示 */}
+          {selectedTeamNumbers.length > 0 && (
+            <div className="mb-6">
+              <label className="block text-lg font-semibold text-gray-700 mb-3">
+                選択中のゼッケン番号 ({selectedTeamNumbers.length}チーム)
               </label>
+              <div className="flex flex-wrap gap-2">
+                {selectedTeamNumbers.map((num) => (
+                  <div
+                    key={num}
+                    className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg font-bold text-lg flex items-center gap-2"
+                  >
+                    <span>{num}</span>
+                    <button
+                      onClick={() => removeTeamNumber(num)}
+                      className="text-red-600 hover:text-red-800 font-bold"
+                      type="button"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => setSelectedTeamNumbers([])}
+                className="mt-3 text-sm text-red-600 hover:text-red-800 font-medium"
+                type="button"
+              >
+                すべてクリア
+              </button>
+            </div>
+          )}
+
+          {/* 手動入力フォーム */}
+          <form onSubmit={handleManualAdd} className="mb-6">
+            <label className="block text-lg font-semibold text-gray-700 mb-4">
+              ゼッケン番号を手動入力
+            </label>
+            <div className="flex gap-2">
               <input
                 type="number"
-                value={teamNumber}
-                onChange={(e) => setTeamNumber(e.target.value)}
-                placeholder="ゼッケン番号"
-                className="w-full px-6 py-4 text-3xl text-center border-4 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-bold"
-                required
+                value={manualInput}
+                onChange={(e) => setManualInput(e.target.value)}
+                placeholder="番号を入力"
+                className="flex-1 px-6 py-4 text-3xl text-center border-4 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-bold"
                 autoFocus
               />
+              <button
+                type="submit"
+                className="px-6 bg-blue-600 text-white rounded-xl text-xl font-bold hover:bg-blue-700 transition"
+              >
+                追加
+              </button>
             </div>
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full bg-green-600 text-white py-6 rounded-xl text-2xl font-bold hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-            >
-              {submitting ? '記録中...' : '通過記録'}
-            </button>
           </form>
+
+          {/* 一括記録ボタン */}
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || selectedTeamNumbers.length === 0}
+            className="w-full bg-green-600 text-white py-6 rounded-xl text-2xl font-bold hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+          >
+            {submitting
+              ? '記録中...'
+              : selectedTeamNumbers.length > 0
+                ? `${selectedTeamNumbers.length}チームを記録`
+                : '通過記録'}
+          </button>
 
           <div className="mt-8 pt-8 border-t border-gray-200">
             <h3 className="text-lg font-semibold text-gray-700 mb-4">
-              参加チーム一覧
+              参加チーム一覧（クリックで追加）
             </h3>
             <div className="grid grid-cols-5 gap-2 max-h-64 overflow-y-auto">
-              {event.teams.map((team) => (
-                <button
-                  key={team.id}
-                  onClick={() => setTeamNumber(team.teamNumber.toString())}
-                  className="p-3 bg-gray-100 hover:bg-blue-100 rounded-lg text-center transition"
-                >
-                  <div className="text-2xl font-bold text-gray-800">
-                    {team.teamNumber}
-                  </div>
-                  <div className="text-xs text-gray-600 truncate">
-                    {team.teamName}
-                  </div>
-                </button>
-              ))}
+              {event.teams.map((team) => {
+                const isSelected = selectedTeamNumbers.includes(team.teamNumber);
+                return (
+                  <button
+                    key={team.id}
+                    onClick={() => {
+                      if (isSelected) {
+                        removeTeamNumber(team.teamNumber);
+                      } else {
+                        addTeamNumber(team.teamNumber);
+                      }
+                    }}
+                    className={`p-3 rounded-lg text-center transition ${
+                      isSelected
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 hover:bg-blue-100 text-gray-800'
+                    }`}
+                  >
+                    <div className="text-2xl font-bold">
+                      {team.teamNumber}
+                    </div>
+                    <div className="text-xs truncate">
+                      {team.teamName}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
