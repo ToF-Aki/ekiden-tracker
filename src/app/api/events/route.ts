@@ -33,23 +33,29 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
+    console.log('Session:', JSON.stringify(session, null, 2));
+
     if (!session?.user) {
       return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
     }
 
     const body = await req.json();
     const { name, date } = body;
+    console.log('Request body:', { name, date });
 
     // ユーザーIDを取得（存在しない場合はデフォルトユーザーを使用）
     let userId = (session.user as any).id;
+    console.log('Session userId:', userId);
 
     if (!userId) {
+      console.log('UserId not found in session, looking for admin user...');
       // デフォルトのadminユーザーを取得または作成
       let adminUser = await prisma.user.findUnique({
         where: { username: 'admin' },
       });
 
       if (!adminUser) {
+        console.log('Admin user not found, creating...');
         const bcrypt = require('bcryptjs');
         const hashedPassword = await bcrypt.hash('admin123', 10);
         adminUser = await prisma.user.create({
@@ -59,11 +65,15 @@ export async function POST(req: NextRequest) {
             name: '管理者',
           },
         });
+        console.log('Admin user created:', adminUser.id);
+      } else {
+        console.log('Admin user found:', adminUser.id);
       }
 
       userId = adminUser.id;
     }
 
+    console.log('Creating event with userId:', userId);
     const event = await prisma.event.create({
       data: {
         name,
@@ -71,8 +81,10 @@ export async function POST(req: NextRequest) {
         userId: userId,
       },
     });
+    console.log('Event created:', event.id);
 
     // デフォルトのチェックポイントを作成
+    console.log('Creating checkpoints...');
     await prisma.checkpoint.createMany({
       data: [
         { eventId: event.id, distance: 1, name: '1km地点' },
@@ -81,10 +93,15 @@ export async function POST(req: NextRequest) {
         { eventId: event.id, distance: 4, name: '4km地点' },
       ],
     });
+    console.log('Checkpoints created');
 
     return NextResponse.json(event);
   } catch (error) {
     console.error('イベント作成エラー:', error);
-    return NextResponse.json({ error: 'イベントの作成に失敗しました' }, { status: 500 });
+    console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    return NextResponse.json({
+      error: 'イベントの作成に失敗しました',
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 });
   }
 }
