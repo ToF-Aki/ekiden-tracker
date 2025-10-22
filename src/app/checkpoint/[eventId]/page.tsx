@@ -24,7 +24,7 @@ export default function CheckpointPage() {
   const params = useParams();
   const eventId = params.eventId as string;
   const [event, setEvent] = useState<Event | null>(null);
-  const [selectedCheckpoint, setSelectedCheckpoint] = useState<number>(1);
+  const [selectedCheckpoint, setSelectedCheckpoint] = useState<number | null>(null);
   const [teamNumber, setTeamNumber] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -115,6 +115,43 @@ export default function CheckpointPage() {
     );
   }
 
+  // 担当地点が未選択の場合は、選択画面を表示
+  if (selectedCheckpoint === null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 flex items-center justify-center">
+        <div className="max-w-2xl w-full">
+          <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                {event.name}
+              </h1>
+              <p className="text-xl text-gray-600 mb-4">通過記録入力</p>
+              <p className="text-lg font-semibold text-blue-600">担当地点を選択してください</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              {event.checkpoints.map((checkpoint) => (
+                <button
+                  key={checkpoint.id}
+                  onClick={() => setSelectedCheckpoint(checkpoint.distance)}
+                  className="p-10 bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-2xl text-3xl font-bold transition-all hover:scale-105 shadow-lg"
+                >
+                  {checkpoint.name}
+                  <div className="text-sm font-normal mt-2 opacity-90">担当</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 担当地点が選択済みの場合は、入力画面を表示
+  const selectedCheckpointName = event.checkpoints.find(
+    (cp) => cp.distance === selectedCheckpoint
+  )?.name || '';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
       <div className="max-w-2xl mx-auto">
@@ -123,7 +160,20 @@ export default function CheckpointPage() {
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
               {event.name}
             </h1>
-            <p className="text-lg text-gray-600">通過記録入力</p>
+            <div className="flex items-center justify-center gap-4">
+              <div className="bg-blue-600 text-white px-6 py-3 rounded-xl text-xl font-bold">
+                {selectedCheckpointName} 担当
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedCheckpoint(null);
+                  setTeamNumber('');
+                }}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition"
+              >
+                地点変更
+              </button>
+            </div>
             <div className="mt-4">
               <span
                 className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
@@ -138,28 +188,6 @@ export default function CheckpointPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-lg font-semibold text-gray-700 mb-4">
-                チェックポイント選択
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                {event.checkpoints.map((checkpoint) => (
-                  <button
-                    key={checkpoint.id}
-                    type="button"
-                    onClick={() => setSelectedCheckpoint(checkpoint.distance)}
-                    className={`p-6 rounded-xl text-xl font-bold transition-all ${
-                      selectedCheckpoint === checkpoint.distance
-                        ? 'bg-blue-600 text-white shadow-lg scale-105'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {checkpoint.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div>
               <label className="block text-lg font-semibold text-gray-700 mb-4">
                 ゼッケン番号入力
