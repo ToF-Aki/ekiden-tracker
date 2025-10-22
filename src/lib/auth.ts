@@ -1,5 +1,7 @@
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { prisma } from './prisma';
+import bcrypt from 'bcryptjs';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -11,9 +13,33 @@ export const authOptions: NextAuthOptions = {
         password: { label: "パスワード", type: "password" },
       },
       async authorize(cred) {
-        if (cred?.username === "admin" && cred?.password === "admin123") {
-          return { id: "1", name: "Admin", email: "admin@example.com" };
+        if (!cred?.username || !cred?.password) {
+          return null;
         }
+
+        // データベースからユーザーを検索
+        const user = await prisma.user.findUnique({
+          where: { username: cred.username },
+        });
+
+        // ユーザーが存在しない場合は作成（初回ログイン時）
+        if (!user && cred.username === "admin" && cred.password === "admin123") {
+          const hashedPassword = await bcrypt.hash(cred.password, 10);
+          const newUser = await prisma.user.create({
+            data: {
+              username: cred.username,
+              password: hashedPassword,
+              name: '管理者',
+            },
+          });
+          return { id: newUser.id, name: newUser.name, email: "admin@example.com" };
+        }
+
+        // パスワード検証
+        if (user && await bcrypt.compare(cred.password, user.password)) {
+          return { id: user.id, name: user.name, email: "admin@example.com" };
+        }
+
         return null;
       },
     }),

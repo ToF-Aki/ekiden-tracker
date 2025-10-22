@@ -43,34 +43,15 @@ export async function POST(req: NextRequest) {
     const { name, date } = body;
     console.log('Request body:', { name, date });
 
-    // ユーザーIDを取得（存在しない場合はデフォルトユーザーを使用）
-    let userId = (session.user as any).id;
+    // ユーザーIDを取得
+    const userId = (session.user as any).id;
     console.log('Session userId:', userId);
 
     if (!userId) {
-      console.log('UserId not found in session, looking for admin user...');
-      // デフォルトのadminユーザーを取得または作成
-      let adminUser = await prisma.user.findUnique({
-        where: { username: 'admin' },
-      });
-
-      if (!adminUser) {
-        console.log('Admin user not found, creating...');
-        const bcrypt = require('bcryptjs');
-        const hashedPassword = await bcrypt.hash('admin123', 10);
-        adminUser = await prisma.user.create({
-          data: {
-            username: 'admin',
-            password: hashedPassword,
-            name: '管理者',
-          },
-        });
-        console.log('Admin user created:', adminUser.id);
-      } else {
-        console.log('Admin user found:', adminUser.id);
-      }
-
-      userId = adminUser.id;
+      console.log('Error: UserId not found in session');
+      return NextResponse.json({
+        error: 'ユーザーIDが見つかりません。再ログインしてください。'
+      }, { status: 401 });
     }
 
     console.log('Creating event with userId:', userId);
