@@ -40,11 +40,35 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { name, date } = body;
 
+    // ユーザーIDを取得（存在しない場合はデフォルトユーザーを使用）
+    let userId = (session.user as any).id;
+
+    if (!userId) {
+      // デフォルトのadminユーザーを取得または作成
+      let adminUser = await prisma.user.findUnique({
+        where: { username: 'admin' },
+      });
+
+      if (!adminUser) {
+        const bcrypt = require('bcryptjs');
+        const hashedPassword = await bcrypt.hash('admin123', 10);
+        adminUser = await prisma.user.create({
+          data: {
+            username: 'admin',
+            password: hashedPassword,
+            name: '管理者',
+          },
+        });
+      }
+
+      userId = adminUser.id;
+    }
+
     const event = await prisma.event.create({
       data: {
         name,
         date: new Date(date),
-        userId: (session.user as any).id,
+        userId: userId,
       },
     });
 
