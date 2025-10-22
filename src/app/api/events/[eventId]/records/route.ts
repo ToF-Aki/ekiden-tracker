@@ -62,8 +62,27 @@ export async function POST(
       return NextResponse.json({ error: 'チェックポイントが見つかりません' }, { status: 404 });
     }
 
-    // 走者番号を計算（1km=1走、2km=1走、3km=2走、4km=2走、5km=3走...）
-    const runnerNumber = Math.ceil(checkpoint.distance / 1);
+    // 走者番号を計算するために、このチームの既存記録を取得
+    // 1走目: 1km, 2km, 3km, 4km
+    // 2走目: 1km, 2km, 3km, 4km
+    // ...という仕組み
+    const existingRecords = await prisma.record.findMany({
+      where: { teamId: team.id },
+      include: { checkpoint: true },
+      orderBy: { timestamp: 'asc' },
+    });
+
+    // 既存記録から、各チェックポイントの最大走者番号を取得
+    const checkpointRunnerMap = new Map<number, number>();
+    existingRecords.forEach(record => {
+      const dist = record.checkpoint.distance;
+      const currentMax = checkpointRunnerMap.get(dist) || 0;
+      checkpointRunnerMap.set(dist, Math.max(currentMax, record.runnerNumber));
+    });
+
+    // 現在のチェックポイントでの次の走者番号を計算
+    const currentMaxRunner = checkpointRunnerMap.get(checkpoint.distance) || 0;
+    const runnerNumber = currentMaxRunner + 1;
 
     // 既存の記録をチェック
     const existingRecord = await prisma.record.findUnique({
@@ -90,18 +109,18 @@ export async function POST(
     const currentCheckpointIndex = allCheckpoints.findIndex(cp => cp.id === checkpoint.id);
     const createdRecords = [];
 
-    // 現在のチェックポイントより前の地点で、記録がないものを自動補完
+    // 現在のチェックポイントより前の地点で、同じ走者番号の記録がないものを自動補完
+    // 例: 3km地点で1走目を記録する場合、1km地点と2km地点にも1走目の記録を自動作成
     for (let i = 0; i < currentCheckpointIndex; i++) {
       const prevCheckpoint = allCheckpoints[i];
-      const prevRunnerNumber = Math.ceil(prevCheckpoint.distance / 1);
 
-      // 既存の記録をチェック
+      // 既存の記録をチェック（同じ走者番号）
       const prevExistingRecord = await prisma.record.findUnique({
         where: {
           teamId_checkpointId_runnerNumber: {
             teamId: team.id,
             checkpointId: prevCheckpoint.id,
-            runnerNumber: prevRunnerNumber,
+            runnerNumber: runnerNumber, // 現在と同じ走者番号
           },
         },
       });
@@ -112,7 +131,7 @@ export async function POST(
           data: {
             teamId: team.id,
             checkpointId: prevCheckpoint.id,
-            runnerNumber: prevRunnerNumber,
+            runnerNumber: runnerNumber, // 現在と同じ走者番号
             timestamp: new Date(),
           },
           include: {
