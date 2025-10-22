@@ -1,35 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { Socket } from 'socket.io-client';
 
 export const useSocket = (eventId?: string) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const socketInstance = io({
-      path: '/api/socket',
-    });
+    // Vercel環境ではSocket.IOを無効化
+    // リアルタイム更新は手動リロードまたはポーリングで代替
+    console.log('⚠️ Socket.IO is disabled on Vercel. Using polling instead.');
 
-    socketInstance.on('connect', () => {
-      console.log('✅ Socket接続成功');
-      setIsConnected(true);
-      
-      if (eventId) {
-        socketInstance.emit('join-event', eventId);
-      }
-    });
-
-    socketInstance.on('disconnect', () => {
-      console.log('❌ Socket切断');
-      setIsConnected(false);
-    });
-
-    setSocket(socketInstance);
+    // ダミーの接続状態を設定（エラー防止）
+    setIsConnected(false);
 
     return () => {
-      socketInstance.disconnect();
+      // クリーンアップ不要
     };
   }, [eventId]);
 
