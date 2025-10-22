@@ -84,6 +84,29 @@ export async function POST(
     const currentMaxRunner = checkpointRunnerMap.get(checkpoint.distance) || 0;
     const runnerNumber = currentMaxRunner + 1;
 
+    // 5走目を超える記録は拒否（駅伝は5人で終了）
+    if (runnerNumber > 5) {
+      return NextResponse.json({
+        error: `ゼッケン${teamNumber}番は既にゴールしています（5走目完了）`
+      }, { status: 400 });
+    }
+
+    // 5走目の最終チェックポイント（4km）が既に記録されている場合も拒否
+    const maxCheckpointDistance = Math.max(...allCheckpoints.map(cp => cp.distance));
+    const finalRecord = await prisma.record.findFirst({
+      where: {
+        teamId: team.id,
+        checkpoint: { distance: maxCheckpointDistance },
+        runnerNumber: 5,
+      },
+    });
+
+    if (finalRecord) {
+      return NextResponse.json({
+        error: `ゼッケン${teamNumber}番は既にゴールしています（5走目の${maxCheckpointDistance}km地点完了）`
+      }, { status: 400 });
+    }
+
     // 既存の記録をチェック
     const existingRecord = await prisma.record.findUnique({
       where: {
