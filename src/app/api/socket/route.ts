@@ -6,3 +6,7 @@ export async function GET(req: NextRequest) {
   initSocket(res as NextApiResponseServerIO);
   return new Response('Socket initialized', { status: 200 });
 }
+
+
+
+

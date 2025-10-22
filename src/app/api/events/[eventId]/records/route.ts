@@ -80,7 +80,51 @@ export async function POST(
       return NextResponse.json({ error: 'この記録は既に登録されています' }, { status: 400 });
     }
 
-    // 記録を作成
+    // 前のチェックポイントの記録を自動補完
+    // 例: 2km地点で入力した場合、1km地点の記録がなければ自動的に追加
+    const allCheckpoints = await prisma.checkpoint.findMany({
+      where: { eventId: eventId },
+      orderBy: { distance: 'asc' },
+    });
+
+    const currentCheckpointIndex = allCheckpoints.findIndex(cp => cp.id === checkpoint.id);
+    const createdRecords = [];
+
+    // 現在のチェックポイントより前の地点で、記録がないものを自動補完
+    for (let i = 0; i < currentCheckpointIndex; i++) {
+      const prevCheckpoint = allCheckpoints[i];
+      const prevRunnerNumber = Math.ceil(prevCheckpoint.distance / 1);
+
+      // 既存の記録をチェック
+      const prevExistingRecord = await prisma.record.findUnique({
+        where: {
+          teamId_checkpointId_runnerNumber: {
+            teamId: team.id,
+            checkpointId: prevCheckpoint.id,
+            runnerNumber: prevRunnerNumber,
+          },
+        },
+      });
+
+      // 記録がなければ作成
+      if (!prevExistingRecord) {
+        const prevRecord = await prisma.record.create({
+          data: {
+            teamId: team.id,
+            checkpointId: prevCheckpoint.id,
+            runnerNumber: prevRunnerNumber,
+            timestamp: new Date(),
+          },
+          include: {
+            team: true,
+            checkpoint: true,
+          },
+        });
+        createdRecords.push(prevRecord);
+      }
+    }
+
+    // 現在のチェックポイントの記録を作成
     const record = await prisma.record.create({
       data: {
         teamId: team.id,
@@ -93,13 +137,18 @@ export async function POST(
         checkpoint: true,
       },
     });
+    createdRecords.push(record);
 
     // WebSocketで全クライアントに通知
     // Note: Next.js App Routerでは、Server Actionsを使用するか、
     // 別のWebSocketサーバーを立てる必要があります
     // ここでは簡易的に実装しています
-    
-    return NextResponse.json(record);
+
+    return NextResponse.json({
+      record,
+      autoCompleted: createdRecords.length - 1, // 自動補完された記録数（現在の記録を除く）
+      allRecords: createdRecords,
+    });
   } catch (error) {
     console.error('記録作成エラー:', error);
     return NextResponse.json({ error: '記録の作成に失敗しました' }, { status: 500 });

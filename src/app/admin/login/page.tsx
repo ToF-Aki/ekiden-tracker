@@ -29,8 +29,8 @@ export default function LoginPage() {
         toast.error(result.error || 'ログインに失敗しました');
       } else {
         toast.success('ログインしました');
-        // result.url を優先（NextAuthが返すURL）
-        window.location.href = result.url || '/admin/dashboard';
+        // Next.jsのrouterを使ってリダイレクト
+        router.push('/admin/dashboard');
       }
     } catch (error) {
       toast.error('エラーが発生しました');

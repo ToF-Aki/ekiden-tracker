@@ -61,13 +61,23 @@ export default function CheckpointPage() {
       });
 
       if (res.ok) {
-        const record = await res.json();
-        toast.success(`ゼッケン${teamNumber}番を記録しました`);
+        const data = await res.json();
+
+        // 自動補完された記録がある場合はメッセージを表示
+        if (data.autoCompleted > 0) {
+          toast.success(
+            `ゼッケン${teamNumber}番を記録しました\n前の地点${data.autoCompleted}箇所も自動補完しました`,
+            { duration: 4000 }
+          );
+        } else {
+          toast.success(`ゼッケン${teamNumber}番を記録しました`);
+        }
+
         setTeamNumber('');
-        
+
         // WebSocketで通知
         if (socket) {
-          socket.emit('record-created', { eventId, record });
+          socket.emit('record-created', { eventId, record: data });
         }
       } else {
         const error = await res.json();
@@ -191,3 +201,7 @@ export default function CheckpointPage() {
     </div>
   );
 }
+
+
+
+
