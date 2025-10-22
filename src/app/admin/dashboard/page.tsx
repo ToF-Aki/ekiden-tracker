@@ -39,9 +39,24 @@ export default function DashboardPage() {
   const fetchEvents = async () => {
     try {
       const res = await fetch('/api/events');
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch events');
+      }
+
       const data = await res.json();
-      setEvents(data);
+
+      // データが配列であることを確認
+      if (Array.isArray(data)) {
+        setEvents(data);
+      } else {
+        console.error('Invalid data format:', data);
+        setEvents([]);
+        toast.error('データの形式が正しくありません');
+      }
     } catch (error) {
+      console.error('Fetch events error:', error);
+      setEvents([]);
       toast.error('イベントの取得に失敗しました');
     } finally {
       setLoading(false);
