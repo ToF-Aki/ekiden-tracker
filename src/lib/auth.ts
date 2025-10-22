@@ -1,11 +1,6 @@
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
-// 本番ドメインを固定（ENVが直るまでの暫定）
-const BASE_URL = "https://www.ekiden-tracker.com";
-
-const FALLBACK_SECRET = "TEMP-ONLY-change-me-0123456789"; // 後で必ず削除
-
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -23,11 +18,7 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-  // 本番ENVがない間はフォールバックで必ず起動
-  secret:
-    process.env.NEXTAUTH_SECRET ||
-    process.env.AUTH_SECRET ||
-    FALLBACK_SECRET,
+  secret: process.env.NEXTAUTH_SECRET,
 
   pages: {
     signIn: '/admin/login',
