@@ -32,6 +32,15 @@ export default function CheckpointPage() {
 
   useEffect(() => {
     fetchEvent();
+
+    // 自動ポーリング: 15秒ごとにイベントデータを再取得
+    const interval = setInterval(() => {
+      fetchEvent();
+    }, 15000); // 15秒
+
+    return () => {
+      clearInterval(interval);
+    };
   }, [eventId]);
 
   const fetchEvent = async () => {

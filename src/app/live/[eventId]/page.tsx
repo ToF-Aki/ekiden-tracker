@@ -56,22 +56,16 @@ export default function LivePage() {
 
   useEffect(() => {
     fetchData();
+
+    // 自動ポーリング: 10秒ごとにデータを再取得
+    const interval = setInterval(() => {
+      fetchData();
+    }, 10000); // 10秒
+
+    return () => {
+      clearInterval(interval);
+    };
   }, [eventId]);
-
-  useEffect(() => {
-    if (socket) {
-      socket.on('record-created', (data: { eventId: string; record: Record }) => {
-        if (data.eventId === eventId) {
-          setRecords((prev) => [...prev, data.record]);
-          toast.success(`${data.record.team.teamName}が${data.record.checkpoint.name}を通過!`);
-        }
-      });
-
-      return () => {
-        socket.off('record-created');
-      };
-    }
-  }, [socket, eventId]);
 
   const fetchData = async () => {
     try {
