@@ -161,24 +161,24 @@ export default function LivePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 text-white">
       {/* ヘッダー */}
-      <div className="sticky top-0 bg-gray-900/90 backdrop-blur-sm border-b border-gray-700 z-10">
-        <div className="px-4 py-4">
-          <h1 className="text-xl font-bold text-center mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+      <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700 z-10 shadow-lg">
+        <div className="px-3 sm:px-4 py-3 sm:py-4">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-center mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
             {event.name}
           </h1>
           <div className="text-center">
-            <span className="text-sm text-gray-300">約10秒間隔で自動更新されます</span>
+            <span className="text-xs sm:text-sm text-gray-300">約10秒間隔で自動更新されます</span>
           </div>
 
           {/* リンクボタン */}
           {(event.link1Text && event.link1Url) || (event.link2Text && event.link2Url) ? (
-            <div className="flex justify-center gap-3 mt-4">
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mt-3 sm:mt-4">
               {event.link1Text && event.link1Url && (
                 <a
                   href={event.link1Url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition text-xs sm:text-sm font-medium"
                 >
                   {event.link1Text}
                 </a>
@@ -188,7 +188,7 @@ export default function LivePage() {
                   href={event.link2Url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition text-xs sm:text-sm font-medium"
                 >
                   {event.link2Text}
                 </a>
@@ -199,27 +199,27 @@ export default function LivePage() {
 
         {/* ゼッケン番号検索 */}
         <div className="border-t border-gray-700">
-          <div className="px-4 py-3">
-            <div className="text-sm text-gray-300 mb-2">ゼッケン番号で絞り込み</div>
-            <div className="flex flex-wrap gap-2">
+          <div className="px-3 sm:px-4 py-2 sm:py-3">
+            <div className="text-xs sm:text-sm text-gray-300 mb-2">ゼッケン番号で絞り込み</div>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               <button
                 onClick={() => setSearchRange('all')}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+                className={`px-2.5 sm:px-3 py-1 rounded-full text-xs font-medium transition active:scale-95 ${
                   searchRange === 'all'
                     ? 'bg-blue-600 text-white'
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600 active:bg-gray-500'
                 }`}
               >
-                すべて ({event?.teams.length || 0}チーム)
+                すべて ({event?.teams.length || 0})
               </button>
               {searchRanges.map((range) => (
                 <button
                   key={range}
                   onClick={() => setSearchRange(range)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+                  className={`px-2.5 sm:px-3 py-1 rounded-full text-xs font-medium transition active:scale-95 ${
                     searchRange === range
                       ? 'bg-blue-600 text-white'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600 active:bg-gray-500'
                   }`}
                 >
                   {range}
@@ -230,10 +230,10 @@ export default function LivePage() {
         </div>
       </div>
 
-      <div className="px-4 py-4">
+      <div className="px-3 sm:px-4 py-3 sm:py-4">
         {/* チーム一覧 */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-bold text-center mb-4">
+        <div className="space-y-3 sm:space-y-4">
+          <h2 className="text-base sm:text-lg font-bold text-center mb-3 sm:mb-4">
             📋 チーム一覧（ゼッケン順）
           </h2>
           {filteredTeams.length === 0 ? (
@@ -244,26 +244,26 @@ export default function LivePage() {
             filteredTeams.map((progress) => (
               <div
                 key={progress.team.id}
-                className="bg-white/10 backdrop-blur-lg rounded-xl p-4 shadow-lg"
+                className="bg-white/10 backdrop-blur-lg rounded-xl p-3 sm:p-4 shadow-lg"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-lg font-bold">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-full flex items-center justify-center text-base sm:text-lg font-bold flex-shrink-0">
                       {progress.team.teamNumber}
                     </div>
-                    <div>
-                      <div className="font-bold text-lg">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-sm sm:text-lg truncate">
                         {progress.team.teamName}
                       </div>
-                      <div className="text-sm text-gray-300">
+                      <div className="text-xs sm:text-sm text-gray-300">
                         現在: {progress.latestCheckpoint > 0
                           ? `${progress.latestCheckpoint}km地点`
                           : 'スタート前'}
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm text-gray-300">
+                  <div className="text-right flex-shrink-0 ml-2">
+                    <div className="text-xs sm:text-sm text-gray-300">
                       {progress.latestRunner > 0
                         ? `${progress.latestRunner}走目`
                         : ''}
@@ -275,9 +275,9 @@ export default function LivePage() {
                     )}
                   </div>
                 </div>
-                
+
                 {/* メンバー表示 - 長いニックネーム対応 */}
-                <div className="space-y-2">
+                <div className="space-y-1.5 sm:space-y-2">
                   {[
                     { name: progress.team.member1, runner: 1 },
                     { name: progress.team.member2, runner: 2 },
@@ -287,7 +287,7 @@ export default function LivePage() {
                   ].map((member, idx) => (
                     <div
                       key={idx}
-                      className={`flex items-center p-3 rounded-lg ${
+                      className={`flex items-center p-2 sm:p-3 rounded-lg ${
                         member.runner === progress.latestRunner
                           ? 'bg-green-500/80'
                           : progress.records.some(r => r.runnerNumber === member.runner)
@@ -295,11 +295,11 @@ export default function LivePage() {
                           : 'bg-white/10'
                       }`}
                     >
-                      <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-xs font-bold mr-3 flex-shrink-0">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-700 rounded-full flex items-center justify-center text-xs font-bold mr-2 sm:mr-3 flex-shrink-0">
                         {member.runner}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">
+                        <div className="text-xs sm:text-sm font-medium truncate">
                           {member.name}
                         </div>
                         <div className="text-xs text-gray-400">
