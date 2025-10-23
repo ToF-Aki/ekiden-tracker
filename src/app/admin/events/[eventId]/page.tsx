@@ -32,8 +32,10 @@ export default function EventManagePage() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showCsvModal, setShowCsvModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [newTeam, setNewTeam] = useState({
     teamNumber: 1,
     teamName: '',
@@ -84,6 +86,42 @@ export default function EventManagePage() {
         fetchEvent();
       } else {
         toast.error('チームの追加に失敗しました');
+      }
+    } catch (error) {
+      toast.error('エラーが発生しました');
+    }
+  };
+
+  const handleEditTeam = (team: Team) => {
+    setEditingTeam(team);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateTeam = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTeam) return;
+
+    try {
+      const res = await fetch(`/api/events/${eventId}/teams/${editingTeam.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          teamName: editingTeam.teamName,
+          member1: editingTeam.member1,
+          member2: editingTeam.member2,
+          member3: editingTeam.member3,
+          member4: editingTeam.member4,
+          member5: editingTeam.member5,
+        }),
+      });
+
+      if (res.ok) {
+        toast.success('チームを更新しました');
+        setShowEditModal(false);
+        setEditingTeam(null);
+        fetchEvent();
+      } else {
+        toast.error('チームの更新に失敗しました');
       }
     } catch (error) {
       toast.error('エラーが発生しました');
@@ -272,6 +310,12 @@ export default function EventManagePage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <button
+                      onClick={() => handleEditTeam(team)}
+                      className="text-blue-600 hover:text-blue-700 mr-4"
+                    >
+                      編集
+                    </button>
+                    <button
                       onClick={() => handleDeleteTeam(team.id)}
                       className="text-red-600 hover:text-red-700"
                     >
@@ -414,6 +458,71 @@ export default function EventManagePage() {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
+                  className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition"
+                >
+                  キャンセル
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && editingTeam && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+          <div className="bg-white rounded-lg p-8 max-w-2xl w-full m-4">
+            <h2 className="text-2xl font-bold mb-6 text-gray-800">
+              チーム編集 (ゼッケン {editingTeam.teamNumber})
+            </h2>
+            <form onSubmit={handleUpdateTeam} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  チーム名
+                </label>
+                <input
+                  type="text"
+                  value={editingTeam.teamName}
+                  onChange={(e) =>
+                    setEditingTeam({ ...editingTeam, teamName: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  メンバー（5名） - 出走順の変更も可能
+                </label>
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <input
+                    key={num}
+                    type="text"
+                    placeholder={`${num}走目`}
+                    value={editingTeam[`member${num}` as keyof Team] as string}
+                    onChange={(e) =>
+                      setEditingTeam({
+                        ...editingTeam,
+                        [`member${num}`]: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    required
+                  />
+                ))}
+              </div>
+              <div className="flex space-x-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+                >
+                  更新
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingTeam(null);
+                  }}
                   className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition"
                 >
                   キャンセル

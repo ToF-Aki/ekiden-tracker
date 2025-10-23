@@ -157,13 +157,13 @@ export default function DashboardPage() {
                   href={`/admin/events/${event.id}`}
                   className="block w-full text-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
                 >
-                  管理
+                  チーム管理
                 </Link>
                 <Link
                   href={`/admin/events/${event.id}/edit`}
                   className="block w-full text-center bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 transition"
                 >
-                  編集
+                  イベント編集
                 </Link>
                 <Link
                   href={`/checkpoint/${event.id}`}
