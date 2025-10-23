@@ -35,6 +35,10 @@ interface Event {
   name: string;
   date: string;
   teams: Team[];
+  link1Text: string | null;
+  link1Url: string | null;
+  link2Text: string | null;
+  link2Url: string | null;
 }
 
 interface TeamProgress {
@@ -165,8 +169,34 @@ export default function LivePage() {
           <div className="text-center">
             <span className="text-sm text-gray-300">約10秒間隔で自動更新されます</span>
           </div>
+
+          {/* リンクボタン */}
+          {(event.link1Text && event.link1Url) || (event.link2Text && event.link2Url) ? (
+            <div className="flex justify-center gap-3 mt-4">
+              {event.link1Text && event.link1Url && (
+                <a
+                  href={event.link1Url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
+                >
+                  {event.link1Text}
+                </a>
+              )}
+              {event.link2Text && event.link2Url && (
+                <a
+                  href={event.link2Url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
+                >
+                  {event.link2Text}
+                </a>
+              )}
+            </div>
+          ) : null}
         </div>
-        
+
         {/* ゼッケン番号検索 */}
         <div className="border-t border-gray-700">
           <div className="px-4 py-3">

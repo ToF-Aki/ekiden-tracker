@@ -22,6 +22,10 @@ model Event {
   name        String
   date        DateTime
   status      String       @default("準備中") // 準備中, 進行中, 終了
+  link1Text   String?      // リンク1のテキスト
+  link1Url    String?      // リンク1のURL
+  link2Text   String?      // リンク2のテキスト
+  link2Url    String?      // リンク2のURL
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   userId      String
