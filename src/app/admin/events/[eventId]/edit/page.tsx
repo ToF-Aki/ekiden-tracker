@@ -149,7 +149,7 @@ export default function EventEditPage() {
               type="text"
               value={eventName}
               onChange={(e) => setEventName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               placeholder="イベント名を入力"
             />
           </div>
@@ -163,7 +163,7 @@ export default function EventEditPage() {
               type="date"
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
             />
           </div>
 
@@ -179,7 +179,7 @@ export default function EventEditPage() {
                   type="text"
                   value={link1Text}
                   onChange={(e) => setLink1Text(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="例: 大会公式サイト"
                 />
               </div>
@@ -191,7 +191,7 @@ export default function EventEditPage() {
                   type="url"
                   value={link1Url}
                   onChange={(e) => setLink1Url(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="https://example.com"
                 />
               </div>
@@ -210,7 +210,7 @@ export default function EventEditPage() {
                   type="text"
                   value={link2Text}
                   onChange={(e) => setLink2Text(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="例: コース地図"
                 />
               </div>
@@ -222,7 +222,7 @@ export default function EventEditPage() {
                   type="url"
                   value={link2Url}
                   onChange={(e) => setLink2Url(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="https://example.com"
                 />
               </div>
