@@ -78,7 +78,7 @@ export default function CheckpointPage() {
     }
   };
 
-  // 一括記録
+  // 一括記録（バッチAPI使用で高速化）
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -88,73 +88,47 @@ export default function CheckpointPage() {
     }
 
     setSubmitting(true);
-    let successCount = 0;
-    let failCount = 0;
-    const errors: string[] = [];
 
     try {
-      // 各チーム番号を並列で記録（高速化）
-      const recordPromises = selectedTeamNumbers.map(async (teamNumber) => {
-        try {
-          const res = await fetch(`/api/events/${eventId}/records`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              teamNumber: teamNumber.toString(),
-              checkpointDistance: selectedCheckpoint,
-            }),
-          });
+      // 1回のリクエストで全チームを記録（超高速！）
+      const res = await fetch(`/api/events/${eventId}/records/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          teamNumbers: selectedTeamNumbers,
+          checkpointDistance: selectedCheckpoint,
+        }),
+      });
 
-          if (res.ok) {
-            const data = await res.json();
+      if (res.ok) {
+        const data = await res.json();
 
-            // WebSocketで通知
-            if (socket) {
-              socket.emit('record-created', { eventId, record: data });
+        // 成功した記録をWebSocketで通知
+        if (socket && data.results) {
+          data.results.forEach((result: any) => {
+            if (result.success) {
+              socket.emit('record-created', { eventId, record: result.record });
             }
-
-            return { success: true, teamNumber };
-          } else {
-            const error = await res.json();
-            return {
-              success: false,
-              teamNumber,
-              error: error.error || '記録の登録に失敗しました'
-            };
-          }
-        } catch (error) {
-          return {
-            success: false,
-            teamNumber,
-            error: 'エラーが発生しました'
-          };
+          });
         }
-      });
 
-      // すべての記録が完了するまで待つ
-      const results = await Promise.all(recordPromises);
-
-      // 結果を集計
-      results.forEach(result => {
-        if (result.success) {
-          successCount++;
-        } else {
-          failCount++;
-          errors.push(`ゼッケン${result.teamNumber}: ${result.error}`);
+        // 結果を表示
+        if (data.success > 0) {
+          toast.success(`${data.success}チームを記録しました`, { duration: 3000 });
         }
-      });
+        if (data.failed > 0) {
+          data.errors.forEach((err: any) => {
+            toast.error(`ゼッケン${err.teamNumber}: ${err.error}`, { duration: 5000 });
+          });
+        }
 
-      // 結果を表示
-      if (successCount > 0) {
-        toast.success(`${successCount}チームを記録しました`, { duration: 3000 });
-      }
-      if (failCount > 0) {
-        errors.forEach(err => toast.error(err, { duration: 5000 }));
-      }
-
-      // 成功したチームをリストから削除
-      if (successCount > 0) {
-        setSelectedTeamNumbers([]);
+        // 成功したチームをリストから削除
+        if (data.success > 0) {
+          setSelectedTeamNumbers([]);
+        }
+      } else {
+        const error = await res.json();
+        toast.error(error.error || '記録の登録に失敗しました');
       }
     } catch (error) {
       toast.error('エラーが発生しました');
