@@ -213,17 +213,6 @@ export default function CheckpointPage() {
                 地点変更
               </button>
             </div>
-            <div className="mt-3 sm:mt-4">
-              <span
-                className={`inline-block px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold ${
-                  isConnected
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
-                }`}
-              >
-                {isConnected ? '接続中' : '未接続'}
-              </span>
-            </div>
           </div>
 
           {/* 選択されたゼッケン番号表示 */}
