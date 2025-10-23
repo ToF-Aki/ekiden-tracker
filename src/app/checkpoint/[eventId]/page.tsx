@@ -93,8 +93,8 @@ export default function CheckpointPage() {
     const errors: string[] = [];
 
     try {
-      // 各チーム番号を順番に記録
-      for (const teamNumber of selectedTeamNumbers) {
+      // 各チーム番号を並列で記録（高速化）
+      const recordPromises = selectedTeamNumbers.map(async (teamNumber) => {
         try {
           const res = await fetch(`/api/events/${eventId}/records`, {
             method: 'POST',
@@ -107,22 +107,42 @@ export default function CheckpointPage() {
 
           if (res.ok) {
             const data = await res.json();
-            successCount++;
 
             // WebSocketで通知
             if (socket) {
               socket.emit('record-created', { eventId, record: data });
             }
+
+            return { success: true, teamNumber };
           } else {
             const error = await res.json();
-            failCount++;
-            errors.push(`ゼッケン${teamNumber}: ${error.error}`);
+            return {
+              success: false,
+              teamNumber,
+              error: error.error || '記録の登録に失敗しました'
+            };
           }
         } catch (error) {
-          failCount++;
-          errors.push(`ゼッケン${teamNumber}: エラーが発生しました`);
+          return {
+            success: false,
+            teamNumber,
+            error: 'エラーが発生しました'
+          };
         }
-      }
+      });
+
+      // すべての記録が完了するまで待つ
+      const results = await Promise.all(recordPromises);
+
+      // 結果を集計
+      results.forEach(result => {
+        if (result.success) {
+          successCount++;
+        } else {
+          failCount++;
+          errors.push(`ゼッケン${result.teamNumber}: ${result.error}`);
+        }
+      });
 
       // 結果を表示
       if (successCount > 0) {
