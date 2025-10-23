@@ -162,17 +162,8 @@ export default function LivePage() {
           <h1 className="text-xl font-bold text-center mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
             {event.name}
           </h1>
-          <div className="flex items-center justify-center space-x-4">
-            <span className="text-sm text-gray-300">リアルタイム速報</span>
-            <span
-              className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                isConnected
-                  ? 'bg-green-500 text-white'
-                  : 'bg-red-500 text-white'
-              }`}
-            >
-              {isConnected ? '🟢 LIVE' : '🔴 接続待機中'}
-            </span>
+          <div className="text-center">
+            <span className="text-sm text-gray-300">約10秒間隔で自動更新されます</span>
           </div>
         </div>
         
