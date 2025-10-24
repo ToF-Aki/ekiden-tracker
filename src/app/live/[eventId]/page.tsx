@@ -234,7 +234,7 @@ export default function LivePage() {
         {/* 4km地点通過情報 */}
         <div className="mb-6 sm:mb-8">
           <h2 className="text-base sm:text-lg font-bold text-center mb-3 sm:mb-4 text-yellow-400">
-            🏁 ゴール（4km地点）通過情報
+            🏁 4km地点通過情報
           </h2>
           <div className="bg-white/10 backdrop-blur-lg rounded-xl p-3 sm:p-4 shadow-lg">
             {(() => {
@@ -247,7 +247,7 @@ export default function LivePage() {
               if (goalRecords.length === 0) {
                 return (
                   <div className="text-center text-gray-400 py-4 text-sm">
-                    まだゴール通過チームはありません
+                    まだ4km地点通過チームはありません
                   </div>
                 );
               }
