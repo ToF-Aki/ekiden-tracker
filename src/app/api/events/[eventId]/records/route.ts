@@ -21,7 +21,12 @@ export async function GET(
       orderBy: { timestamp: 'asc' },
     });
 
-    return NextResponse.json(records);
+    // 5秒間のキャッシュを設定（負荷軽減）
+    return NextResponse.json(records, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=5, stale-while-revalidate=10',
+      },
+    });
   } catch (error) {
     console.error('記録取得エラー:', error);
     return NextResponse.json({ error: '記録の取得に失敗しました' }, { status: 500 });

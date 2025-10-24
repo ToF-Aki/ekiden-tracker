@@ -24,7 +24,12 @@ export async function GET(
       return NextResponse.json({ error: 'イベントが見つかりません' }, { status: 404 });
     }
 
-    return NextResponse.json(event);
+    // 10秒間のキャッシュを設定（イベント情報は変更が少ない）
+    return NextResponse.json(event, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
+      },
+    });
   } catch (error) {
     console.error('イベント取得エラー:', error);
     return NextResponse.json({ error: 'イベントの取得に失敗しました' }, { status: 500 });
