@@ -231,6 +231,61 @@ export default function LivePage() {
       </div>
 
       <div className="px-3 sm:px-4 py-3 sm:py-4">
+        {/* 4km地点通過情報 */}
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-base sm:text-lg font-bold text-center mb-3 sm:mb-4 text-yellow-400">
+            🏁 ゴール（4km地点）通過情報
+          </h2>
+          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-3 sm:p-4 shadow-lg">
+            {(() => {
+              // 4km地点の記録を抽出
+              const goalRecords = records
+                .filter((record) => record.checkpoint.distance === 4)
+                .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                .slice(0, 10); // 最新10件
+
+              if (goalRecords.length === 0) {
+                return (
+                  <div className="text-center text-gray-400 py-4 text-sm">
+                    まだゴール通過チームはありません
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-2">
+                  {goalRecords.map((record, index) => (
+                    <div
+                      key={record.id}
+                      className="flex items-center justify-between p-2 sm:p-3 bg-white/10 rounded-lg"
+                    >
+                      <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-yellow-500 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold text-gray-900 flex-shrink-0">
+                          {index + 1}
+                        </div>
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-full flex items-center justify-center text-sm sm:text-base font-bold flex-shrink-0">
+                          {record.team.teamNumber}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-bold text-xs sm:text-sm truncate">
+                            {record.team.teamName}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {record.runnerNumber}走目
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-xs sm:text-sm text-gray-300 flex-shrink-0 ml-2">
+                        {format(new Date(record.timestamp), 'HH:mm:ss')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
         {/* チーム一覧 */}
         <div className="space-y-3 sm:space-y-4">
           <h2 className="text-base sm:text-lg font-bold text-center mb-3 sm:mb-4">
