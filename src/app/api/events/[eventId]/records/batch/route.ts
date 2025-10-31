@@ -44,11 +44,22 @@ export async function POST(
     // チーム番号→チームIDのマップを作成
     const teamNumberToTeamMap = new Map(teams.map(t => [t.teamNumber, t]));
 
-    // 4. 対象チームの全既存記録を一括取得
+    // 4. 対象チームの全既存記録を一括取得（最小限のデータのみ）
     const teamIds = teams.map(t => t.id);
     const allExistingRecords = await prisma.record.findMany({
       where: { teamId: { in: teamIds } },
-      include: { checkpoint: true, team: true },
+      select: {
+        id: true,
+        teamId: true,
+        checkpointId: true,
+        runnerNumber: true,
+        timestamp: true,
+        checkpoint: {
+          select: {
+            distance: true,
+          }
+        }
+      },
       orderBy: { timestamp: 'asc' },
     });
 

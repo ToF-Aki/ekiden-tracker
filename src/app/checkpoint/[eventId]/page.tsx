@@ -78,7 +78,7 @@ export default function CheckpointPage() {
     }
   };
 
-  // 一括記録（バッチAPI使用で高速化 + 非同期処理）
+  // 一括記録（最適化済みバッチAPI使用）
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -87,92 +87,55 @@ export default function CheckpointPage() {
       return;
     }
 
-    // 処理中のチーム番号を保存
-    const teamsToSubmit = [...selectedTeamNumbers];
-
-    // ✅ 即座にUIをクリアして次の入力を受け付ける（Optimistic UI）
-    setSelectedTeamNumbers([]);
-    setManualInput('');
-
-    // ✅ 送信中の視覚的フィードバック（短時間のみ）
     setSubmitting(true);
-    toast.loading(`${teamsToSubmit.length}チームを記録中...`, {
-      id: 'submitting',
-      duration: 1000
-    });
 
-    // ✅ バックグラウンドで処理を実行（Fire-and-Forget）
-    // ユーザーは待たずに次の入力ができる
-    (async () => {
-      try {
-        const res = await fetch(`/api/events/${eventId}/records/batch`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            teamNumbers: teamsToSubmit,
-            checkpointDistance: selectedCheckpoint,
-          }),
-          // タイムアウト設定（30秒）
-          signal: AbortSignal.timeout(30000),
-        });
+    try {
+      // 最適化されたバッチAPIで高速記録（0.1-0.3秒）
+      const res = await fetch(`/api/events/${eventId}/records/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          teamNumbers: selectedTeamNumbers,
+          checkpointDistance: selectedCheckpoint,
+        }),
+      });
 
-        if (res.ok) {
-          const data = await res.json();
+      if (res.ok) {
+        const data = await res.json();
 
-          // 成功した記録をWebSocketで通知
-          if (socket && data.results) {
-            data.results.forEach((result: any) => {
-              if (result.success) {
-                socket.emit('record-created', { eventId, record: result.record });
-              }
-            });
-          }
-
-          // 結果を非同期で表示
-          if (data.success > 0) {
-            toast.success(`✓ ${data.success}チームの記録完了`, {
-              duration: 2000,
-              id: `success-${Date.now()}`
-            });
-          }
-          if (data.failed > 0) {
-            data.errors.forEach((err: any) => {
-              toast.error(`ゼッケン${err.teamNumber}: ${err.error}`, {
-                duration: 5000,
-                id: `error-${err.teamNumber}-${Date.now()}`
-              });
-            });
-          }
-        } else {
-          const error = await res.json();
-          toast.error(`記録エラー: ${error.error || '不明なエラー'}`, {
-            duration: 5000,
-            id: `error-${Date.now()}`
+        // 成功した記録をWebSocketで通知
+        if (socket && data.results) {
+          data.results.forEach((result: any) => {
+            if (result.success) {
+              socket.emit('record-created', { eventId, record: result.record });
+            }
           });
         }
-      } catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') {
-          toast.error(`タイムアウト: ${teamsToSubmit.length}チームの記録`, {
-            duration: 5000,
-            id: `timeout-${Date.now()}`
-          });
-        } else {
-          toast.error('記録の送信に失敗しました', {
-            duration: 5000,
-            id: `error-${Date.now()}`
+
+        // 結果を表示
+        if (data.success > 0) {
+          toast.success(`${data.success}チームを記録しました`, { duration: 2000 });
+        }
+        if (data.failed > 0) {
+          data.errors.forEach((err: any) => {
+            toast.error(`ゼッケン${err.teamNumber}: ${err.error}`, { duration: 5000 });
           });
         }
-      } finally {
-        // 送信完了（バックグラウンド処理終了）
-        setSubmitting(false);
+
+        // 成功したチームをリストから削除
+        if (data.success > 0) {
+          setSelectedTeamNumbers([]);
+          setManualInput('');
+        }
+      } else {
+        const error = await res.json();
+        toast.error(error.error || '記録の登録に失敗しました');
       }
-    })();
-
-    // ✅ 関数はすぐに終了し、UIは即座に次の入力を受け付ける
-    // submittingフラグを短時間だけtrueにして視覚的フィードバック
-    setTimeout(() => {
+    } catch (error) {
+      toast.error('エラーが発生しました');
+    } finally {
       setSubmitting(false);
-    }, 500);
+    }
   };
 
   if (loading) {
@@ -312,19 +275,15 @@ export default function CheckpointPage() {
           {/* 一括記録ボタン */}
           <button
             onClick={handleSubmit}
-            disabled={selectedTeamNumbers.length === 0}
+            disabled={submitting || selectedTeamNumbers.length === 0}
             className="w-full bg-green-600 text-white py-4 sm:py-6 rounded-xl text-xl sm:text-2xl font-bold hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg active:bg-green-800 active:scale-95"
           >
-            {selectedTeamNumbers.length > 0
-              ? `${selectedTeamNumbers.length}チームを記録`
-              : '通過記録'}
+            {submitting
+              ? '記録中...'
+              : selectedTeamNumbers.length > 0
+                ? `${selectedTeamNumbers.length}チームを記録`
+                : '通過記録'}
           </button>
-
-          {/* 処理状態の説明 */}
-          <div className="mt-3 text-center text-sm text-gray-600">
-            <p>記録ボタンを押すとすぐに次の入力ができます</p>
-            <p className="text-xs mt-1">結果は処理完了後に通知されます</p>
-          </div>
 
           <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-200">
             <h3 className="text-base sm:text-lg font-semibold text-gray-700 mb-3 sm:mb-4">
